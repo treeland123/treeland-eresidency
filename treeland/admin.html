@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>트리랜드 — 관리자</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f4f9f0; color: #1a2e0f; }
+
+    /* LOGIN */
+    .login-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(160deg, #27500A, #3B6D11);
+    }
+    .login-card {
+      background: white;
+      border-radius: 16px;
+      padding: 2.5rem;
+      width: 340px;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+    }
+    .login-card h2 { font-size: 18px; color: #27500A; margin-bottom: 0.3rem; }
+    .login-card p { font-size: 12px; color: #6b7c5a; margin-bottom: 1.5rem; }
+    .login-icon { font-size: 40px; margin-bottom: 1rem; }
+    .login-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #ddeecb;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 1rem;
+      outline: none;
+    }
+    .login-input:focus { border-color: #639922; }
+    .login-btn {
+      width: 100%;
+      padding: 11px;
+      background: #3B6D11;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .login-btn:hover { background: #27500A; }
+    .login-error { font-size: 12px; color: #c0392b; margin-top: 0.5rem; display: none; }
+
+    /* ADMIN LAYOUT */
+    .admin-wrap { display: none; }
+    nav {
+      background: #27500A;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; color: #C0DD97; font-size: 15px; font-weight: 600; }
+    .nav-logo span { font-size: 20px; }
+    .nav-right { display: flex; gap: 12px; align-items: center; }
+    .nav-badge { background: rgba(255,255,255,0.15); color: #C0DD97; font-size: 11px; padding: 4px 12px; border-radius: 20px; }
+    .logout-btn { font-size: 12px; color: #97C459; cursor: pointer; background: none; border: 1px solid #97C459; padding: 5px 12px; border-radius: 20px; }
+
+    .main { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 2rem; }
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.25rem;
+      border: 1px solid #ddeecb;
+      text-align: center;
+    }
+    .stat-num { font-size: 28px; font-weight: 700; color: #3B6D11; }
+    .stat-label { font-size: 12px; color: #6b7c5a; margin-top: 4px; }
+
+    /* TABS */
+    .tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; }
+    .tab-btn {
+      padding: 8px 18px;
+      border-radius: 20px;
+      border: 1.5px solid #ddeecb;
+      background: white;
+      font-size: 13px;
+      color: #6b7c5a;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .tab-btn.active { background: #3B6D11; color: white; border-color: #3B6D11; }
+
+    /* TABLE */
+    .table-card {
+      background: white;
+      border-radius: 14px;
+      border: 1px solid #ddeecb;
+      overflow: hidden;
+    }
+    .table-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #ddeecb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .table-header h3 { font-size: 14px; font-weight: 600; color: #27500A; }
+    .refresh-btn {
+      font-size: 12px;
+      color: #3B6D11;
+      border: 1px solid #ddeecb;
+      padding: 5px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      background: none;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { padding: 10px 16px; text-align: left; font-size: 11px; color: #6b7c5a; font-weight: 600; letter-spacing: 0.5px; border-bottom: 1px solid #ddeecb; background: #fafff6; }
+    td { padding: 12px 16px; border-bottom: 1px solid #f0f7e8; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafff6; }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-pending { background: #fef9e7; color: #b7770d; }
+    .badge-approved { background: #EAF3DE; color: #27500A; }
+    .badge-rejected { background: #fdecea; color: #922b21; }
+
+    .action-btn {
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: none;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 4px;
+    }
+    .btn-approve { background: #EAF3DE; color: #27500A; }
+    .btn-approve:hover { background: #C0DD97; }
+    .btn-reject { background: #fdecea; color: #922b21; }
+    .btn-reject:hover { background: #f5b7b1; }
+    .btn-card { background: #e8f4fd; color: #1a5276; }
+    .btn-card:hover { background: #aed6f1; }
+
+    .empty-row td { text-align: center; color: #a0b090; padding: 2.5rem; }
+
+    /* MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      width: 360px;
+      text-align: center;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 12px; right: 16px;
+      font-size: 18px;
+      cursor: pointer;
+      color: #aaa;
+      background: none;
+      border: none;
+    }
+    .modal h3 { font-size: 16px; font-weight: 600; color: #27500A; margin-bottom: 1.5rem; }
+
+    /* ID CARD IN MODAL */
+    .id-card-modal {
+      width: 300px;
+      height: 185px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #27500A 0%, #3B6D11 55%, #639922 100%);
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      margin: 0 auto 1.25rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .card-deco { position: absolute; width: 160px; height: 160px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.1); top: -55px; right: -35px; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 1; }
+    .card-nation-text { font-size: 8px; color: rgba(255,255,255,0.85); font-weight: 600; letter-spacing: 0.3px; }
+    .card-type-text { font-size: 7px; color: rgba(255,255,255,0.6); letter-spacing: 1px; }
+    .chip { width: 28px; height: 20px; background: rgba(255,255,255,0.2); border-radius: 3px; border: 1px solid rgba(255,255,255,0.3); position: relative; z-index: 1; }
+    .card-bottom { display: flex; justify-content: space-between; align-items: flex-end; position: relative; z-index: 1; }
+    .card-name-text { font-size: 15px; font-weight: 600; color: white; }
+    .card-meta-label { font-size: 7px; color: rgba(255,255,255,0.55); letter-spacing: 0.5px; }
+    .card-meta-val { font-size: 9px; color: rgba(255,255,255,0.9); font-weight: 600; }
+    .card-meta-group { display: flex; gap: 14px; margin-top: 3px; }
+    #modal-qr { width: 44px; height: 44px; }
+    #modal-qr canvas, #modal-qr img { width: 44px !important; height: 44px !important; border-radius: 3px; }
+
+    .download-btn {
+      width: 100%;
+      padding: 10px;
+      background: #3B6D11;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+    .download-btn:hover { background: #27500A; }
+
+    .section { display: none; }
+    .section.active { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="login-wrap">
+  <div class="login-card">
+    <div class="login-icon">🌲</div>
+    <h2>관리자 로그인</h2>
+    <p>트리랜드 자유공화국 관리자 전용</p>
+    <input class="login-input" type="password" id="pw-input" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter') doLogin()" />
+    <button class="login-btn" onclick="doLogin()">로그인</button>
+    <div class="login-error" id="login-error">비밀번호가 올바르지 않습니다.</div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="admin-wrap" id="admin-wrap">
+  <nav>
+    <div class="nav-logo"><span>🌲</span> 관리자 페이지</div>
+    <div class="nav-right">
+      <div class="nav-badge">ADMIN</div>
+      <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num" id="s-pending">0</div>
+        <div class="stat-label">대기 중</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="s-approved">0</div>
+        <div class="stat-label">승인됨</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="s-rejected">0</div>
+        <div class="stat-label">거절됨</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('pending', this)">대기 중</button>
+      <button class="tab-btn" onclick="switchTab('approved', this)">승인됨</button>
+      <button class="tab-btn" onclick="switchTab('rejected', this)">거절됨</button>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <h3 id="table-title">대기 중인 신청</h3>
+        <button class="refresh-btn" onclick="loadAll()">새로고침</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>이름</th>
+            <th>이메일</th>
+            <th>국적</th>
+            <th>신청일</th>
+            <th>상태</th>
+            <th>액션</th>
+          </tr>
+        </thead>
+        <tbody id="app-table-body">
+          <tr class="empty-row"><td colspan="6">로딩 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- CARD MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>레지던트 ID 카드</h3>
+    <div class="id-card-modal" id="modal-card">
+      <div class="card-deco"></div>
+      <div class="card-top">
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:14px;">🌲</span>
+            <div>
+              <div class="card-nation-text">TREELAND FREE REPUBLIC</div>
+              <div class="card-nation-text" style="opacity:0.7;font-size:7px;">트리랜드 자유공화국</div>
+            </div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div class="card-type-text">E-RESIDENT</div>
+          <div class="card-type-text" style="margin-top:1px;">전자시민</div>
+        </div>
+      </div>
+      <div><div class="chip"></div></div>
+      <div class="card-bottom">
+        <div>
+          <div class="card-meta-label">NAME / 성명</div>
+          <div class="card-name-text" id="modal-name">—</div>
+          <div class="card-meta-group">
+            <div>
+              <div class="card-meta-label">ID NO.</div>
+              <div class="card-meta-val" id="modal-id">—</div>
+            </div>
+            <div>
+              <div class="card-meta-label">NATION</div>
+              <div class="card-meta-val" id="modal-nation">—</div>
+            </div>
+            <div>
+              <div class="card-meta-label">ISSUED</div>
+              <div class="card-meta-val" id="modal-date">—</div>
+            </div>
+          </div>
+        </div>
+        <div style="background:rgba(255,255,255,0.95);border-radius:4px;padding:3px;width:50px;height:50px;display:flex;align-items:center;justify-content:center;">
+          <div id="modal-qr"></div>
+        </div>
+      </div>
+    </div>
+    <button class="download-btn" onclick="downloadCard()">카드 이미지 다운로드</button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const ADMIN_PW = "treeland2025";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAvIHKAXICU7sl12YKM8LFBIrcFA79_RrY",
+    authDomain: "treeland-eresidency.firebaseapp.com",
+    projectId: "treeland-eresidency",
+    storageBucket: "treeland-eresidency.firebasestorage.app",
+    messagingSenderId: "970872425624",
+    appId: "1:970872425624:web:5bba8e4b33fe4a272454ed"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  let allApps = [];
+  let currentTab = "pending";
+
+  window.doLogin = function() {
+    const pw = document.getElementById("pw-input").value;
+    if (pw === ADMIN_PW) {
+      document.getElementById("login-wrap").style.display = "none";
+      document.getElementById("admin-wrap").style.display = "block";
+      loadAll();
+    } else {
+      document.getElementById("login-error").style.display = "block";
+    }
+  }
+
+  window.doLogout = function() {
+    document.getElementById("login-wrap").style.display = "flex";
+    document.getElementById("admin-wrap").style.display = "none";
+    document.getElementById("pw-input").value = "";
+  }
+
+  window.loadAll = async function() {
+    const body = document.getElementById("app-table-body");
+    body.innerHTML = '<tr class="empty-row"><td colspan="6">로딩 중...</td></tr>';
+
+    const q = query(collection(db, "applications"), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    allApps = [];
+    snap.forEach(d => allApps.push({ id: d.id, ...d.data() }));
+
+    const pending = allApps.filter(a => a.status === "pending").length;
+    const approved = allApps.filter(a => a.status === "approved").length;
+    const rejected = allApps.filter(a => a.status === "rejected").length;
+    document.getElementById("s-pending").textContent = pending;
+    document.getElementById("s-approved").textContent = approved;
+    document.getElementById("s-rejected").textContent = rejected;
+
+    renderTable();
+  }
+
+  function renderTable() {
+    const filtered = allApps.filter(a => a.status === currentTab);
+    const body = document.getElementById("app-table-body");
+    const titles = { pending: "대기 중인 신청", approved: "승인된 레지던트", rejected: "거절된 신청" };
+    document.getElementById("table-title").textContent = titles[currentTab];
+
+    if (filtered.length === 0) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="6">해당 항목이 없습니다.</td></tr>';
+      return;
+    }
+
+    body.innerHTML = filtered.map(a => {
+      const date = a.createdAt ? new Date(a.createdAt.seconds * 1000).toLocaleDateString("ko-KR") : "—";
+      const badgeClass = { pending: "badge-pending", approved: "badge-approved", rejected: "badge-rejected" }[a.status];
+      const badgeText = { pending: "대기", approved: "승인", rejected: "거절" }[a.status];
+      let actions = "";
+      if (a.status === "pending") {
+        actions = `<button class="action-btn btn-approve" onclick="approve('${a.id}')">승인</button><button class="action-btn btn-reject" onclick="reject('${a.id}')">거절</button>`;
+      } else if (a.status === "approved") {
+        actions = `<button class="action-btn btn-card" onclick="showCard('${a.id}')">카드 발급</button>`;
+      }
+      return `<tr>
+        <td><strong>${a.name || "—"}</strong></td>
+        <td>${a.email || "—"}</td>
+        <td>${a.nation || "—"}</td>
+        <td>${date}</td>
+        <td><span class="status-badge ${badgeClass}">${badgeText}</span></td>
+        <td>${actions}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  window.switchTab = function(tab, el) {
+    currentTab = tab;
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    el.classList.add("active");
+    renderTable();
+  }
+
+  window.approve = async function(id) {
+    const app = allApps.find(a => a.id === id);
+    if (!app) return;
+
+    // 레지던트 번호 생성
+    const resSnap = await getDocs(collection(db, "residents"));
+    const num = String(resSnap.size + 1).padStart(4, "0");
+    const residentId = "TLR-" + num;
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, ".");
+
+    await updateDoc(doc(db, "applications", id), { status: "approved" });
+    await addDoc(collection(db, "residents"), {
+      name: app.name,
+      email: app.email,
+      nation: app.nation,
+      residentId,
+      issuedAt: today,
+      applicationId: id,
+      createdAt: serverTimestamp()
+    });
+
+    allApps = allApps.map(a => a.id === id ? { ...a, status: "approved" } : a);
+    const pending = allApps.filter(a => a.status === "pending").length;
+    const approved = allApps.filter(a => a.status === "approved").length;
+    document.getElementById("s-pending").textContent = pending;
+    document.getElementById("s-approved").textContent = approved;
+    renderTable();
+    alert(`승인 완료!\n레지던트 ID: ${residentId}`);
+  }
+
+  window.reject = async function(id) {
+    if (!confirm("이 신청을 거절하시겠습니까?")) return;
+    await updateDoc(doc(db, "applications", id), { status: "rejected" });
+    allApps = allApps.map(a => a.id === id ? { ...a, status: "rejected" } : a);
+    const pending = allApps.filter(a => a.status === "pending").length;
+    const rejected = allApps.filter(a => a.status === "rejected").length;
+    document.getElementById("s-pending").textContent = pending;
+    document.getElementById("s-rejected").textContent = rejected;
+    renderTable();
+  }
+
+  window.showCard = async function(appId) {
+    const resSnap = await getDocs(collection(db, "residents"));
+    let resident = null;
+    resSnap.forEach(d => { if (d.data().applicationId === appId) resident = d.data(); });
+    if (!resident) { alert("레지던트 정보를 찾을 수 없습니다."); return; }
+
+    document.getElementById("modal-name").textContent = resident.name;
+    document.getElementById("modal-id").textContent = resident.residentId;
+    document.getElementById("modal-nation").textContent = resident.nation?.slice(0, 8) || "—";
+    document.getElementById("modal-date").textContent = resident.issuedAt;
+
+    const qrDiv = document.getElementById("modal-qr");
+    qrDiv.innerHTML = "";
+    new QRCode(qrDiv, {
+      text: `https://treeland-eresidency.vercel.app/verify.html?id=${resident.residentId}`,
+      width: 44,
+      height: 44,
+      colorDark: "#27500A",
+      colorLight: "#ffffff"
+    });
+
+    document.getElementById("modal").classList.add("show");
+  }
+
+  window.closeModal = function() {
+    document.getElementById("modal").classList.remove("show");
+  }
+
+  window.downloadCard = function() {
+    const card = document.getElementById("modal-card");
+    import("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js").then(() => {
+      html2canvas(card, { scale: 3, backgroundColor: null }).then(canvas => {
+        const a = document.createElement("a");
+        a.download = document.getElementById("modal-id").textContent + "_card.png";
+        a.href = canvas.toDataURL("image/png");
+        a.click();
+      });
+    });
+  }
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</body>
+</html>
